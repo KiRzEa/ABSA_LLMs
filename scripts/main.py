@@ -24,10 +24,6 @@ parser.add_argument("--batch_size", type=int, default=16)
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-from huggingface_hub import login
-login(token="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",add_to_git_credential=True)
-
-
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 args = parser.parse_args()

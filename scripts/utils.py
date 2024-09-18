@@ -1,4 +1,4 @@
-from category_mapping import *
+from mapper import *
 import os
 
 def get_output(labels, task: str):
