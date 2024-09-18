@@ -1,0 +1,300 @@
+import argparse
+import torch
+import os
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from torch.utils.data import DataLoader
+from transformers import default_data_collator, get_linear_schedule_with_warmup
+from transformers import AutoModelForSeq2SeqLM
+import pandas as pd
+from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
+from utils import *
+from eval_utils import *
+from peft import LoraConfig, get_peft_model, TaskType
+from datasets import Dataset, DatasetDict
+from tqdm import tqdm
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--model_id", type=str, default="ura-hcmut/ura-llama-7b")
+parser.add_argument("--domain", choices=["Restaurant", "Phone"], default="Restaurant")
+parser.add_argument("--task", choices=["pair", "triplet", "quadruplet"])
+parser.add_argument("--lr", type=float, default=2e-4)
+parser.add_argument("--num_epochs", type=int, default=10)
+parser.add_argument("--batch_size", type=int, default=16)
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+
+from huggingface_hub import login
+login(token="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",add_to_git_credential=True)
+
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+args = parser.parse_args()
+#======================================
+model_id = args.model_id
+domain = args.domain
+task = args.task
+lr = args.lr
+num_epochs = args.num_epochs
+batch_size = args.batch_size
+os.environ['domain'] = domain
+#======================================
+print("="*50)
+print("[INFO CUDA is Available: ",torch.cuda.is_available())
+print("[INFO] Device: ", device)
+print("[INFO] Model ID: ", model_id)
+print("[INFO] Type of Dataset: ", type_of_dataset)
+print("[INFO] Learning Rate: ", lr)
+print("[INFO] Number of Epochs: ", num_epochs)
+print("[INFO] Batch Size: ", batch_size)
+print("="*50)
+#======================================
+
+df_train, df_test = read_data(domain, task)
+
+text_column = "input"
+label_column = "output"
+    
+def create_instruction_input_output(df, task):
+    input_text = []
+    output_text = []
+    for index, row in df.iterrows():
+        input_review = clean_doc(row['input'], word_segment=False, max_length=max_input_length,lower_case=True)
+        if task == "pair":
+            completion = row['output']
+            prompt = f"""[INST] Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:
+[/INST]"""
+        elif task == "triplet":
+            completion = get_output(row['output'], task=task)
+            prompt = f"""[INST] Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:
+[/INST]"""
+        elif task == "quadruplet":
+            completion = get_output(row['output'], task=task)
+            prompt = f"""[INST] Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:
+[/INST]"""
+        
+        prompt = prompt.replace("..", ".")
+        input_text.append(prompt)
+        output_text.append(completion)
+    print(len(input_text),len(output_text))
+    return input_text,output_text
+
+#======================================
+# Train
+
+if task == 'pair':
+    input_train, output_train = df_train.input, df_train.output
+elif task == 'triplet':
+    input_train, output_train = None, None
+elif task == 'quadruplet':
+    input_train, output_train = create_instruction_input_output(df_train, task=task)
+
+train_df = pd.DataFrame(list(zip(input_train, output_train)), columns =['text', 'label'])
+
+tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir="models/")
+model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto",cache_dir="models/")
+
+
+def print_trainable_parameters(model):
+    """
+    Prints the number of trainable parameters in the model.
+    """
+    trainable_params = 0
+    all_param = 0
+    for _, param in model.named_parameters():
+        all_param += param.numel()
+        if param.requires_grad:
+            trainable_params += param.numel()
+    print(
+        f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {100 * trainable_params / all_param}"
+    )
+
+
+
+peft_config = LoraConfig(
+        task_type=TaskType.CAUSAL_LM,
+        inference_mode=False,
+        r=8, # Lora attention dimension.
+        lora_alpha=32, # the alpha parameter for Lora scaling.
+        lora_dropout=0.05, # the dropout probability for Lora layers.
+        target_modules=[
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ],
+)
+
+model = get_peft_model(model, peft_config)
+print_trainable_parameters(model)
+
+max_input_length = max([len(tokenizer(text)['input_ids']) for text in input_train])
+max_output_length = max([len(tokenizer(text)['input_ids']) for text in output_train])
+
+tds = Dataset.from_pandas(train_df)
+
+dataset = DatasetDict()
+dataset['train'] = tds
+print(dataset)
+
+
+from torch.utils.data import DataLoader
+from transformers import default_data_collator
+
+# data preprocessing
+if tokenizer.pad_token_id is None:
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+max_input_length = max([len(tokenizer(text)['input_ids']) for text in input_train])
+max_output_length = max([len(tokenizer(text)['input_ids']) for text in output_train])
+print(max_input_length)
+print(max_output_length)
+
+
+def preprocess_function(examples):
+    batch_size = len(examples["text"])
+    inputs = [item + " " for item in examples["text"]]
+    targets = examples["label"]
+    model_inputs = tokenizer(inputs)
+    labels = tokenizer(targets, add_special_tokens=False)  # don't add bos token because we concatenate with inputs
+    for i in range(batch_size):
+        sample_input_ids = model_inputs["input_ids"][i]
+        label_input_ids = labels["input_ids"][i] + [tokenizer.eos_token_id]
+        # print(i, sample_input_ids, label_input_ids)
+        model_inputs["input_ids"][i] = sample_input_ids + label_input_ids
+        labels["input_ids"][i] = [-100] * len(sample_input_ids) + label_input_ids
+        model_inputs["attention_mask"][i] = [1] * len(model_inputs["input_ids"][i])
+    # print(model_inputs)
+    for i in range(batch_size):
+        sample_input_ids = model_inputs["input_ids"][i]
+        label_input_ids = labels["input_ids"][i]
+        model_inputs["input_ids"][i] = [tokenizer.pad_token_id] * (
+            max_input_length - len(sample_input_ids)
+        ) + sample_input_ids
+        model_inputs["attention_mask"][i] = [0] * (max_input_length - len(sample_input_ids)) + model_inputs[
+            "attention_mask"
+        ][i]
+        labels["input_ids"][i] = [-100] * (max_input_length - len(sample_input_ids)) + label_input_ids
+        model_inputs["input_ids"][i] = torch.tensor(model_inputs["input_ids"][i][:max_input_length])
+        model_inputs["attention_mask"][i] = torch.tensor(model_inputs["attention_mask"][i][:max_input_length])
+        labels["input_ids"][i] = torch.tensor(labels["input_ids"][i][:max_input_length])
+    model_inputs["labels"] = labels["input_ids"]
+    return model_inputs
+
+processed_datasets = dataset.map(
+    preprocess_function,
+    batched=True,
+    num_proc=1,
+    remove_columns=dataset["train"].column_names,
+    load_from_cache_file=False,
+    desc="Running tokenizer on dataset",
+)
+
+train_dataset = processed_datasets["train"]
+
+
+train_dataloader = DataLoader(
+    train_dataset, shuffle=True, collate_fn=default_data_collator, batch_size=batch_size, pin_memory=True
+)
+
+
+from transformers import get_linear_schedule_with_warmup
+# optimizer and lr scheduler
+optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+lr_scheduler = get_linear_schedule_with_warmup(
+    optimizer=optimizer,
+    num_warmup_steps=0,
+    num_training_steps=(len(train_dataloader) * num_epochs),
+)
+
+
+
+import time
+start_time= time.time() # set the time at which inference started
+
+# training and evaluation
+for epoch in range(num_epochs):
+    model.train()
+    total_loss = 0
+    for step, batch in enumerate(tqdm(train_dataloader)):
+        batch = {k: v.to(device) for k, v in batch.items()}
+        #         print(batch)
+        #         print(batch["input_ids"].shape)
+        outputs = model(**batch)
+        loss = outputs.loss
+        total_loss += loss.detach().float()
+        loss.backward()
+        optimizer.step()
+        lr_scheduler.step()
+        optimizer.zero_grad()
+
+    train_epoch_loss = total_loss / len(train_dataloader)
+    train_ppl = torch.exp(train_epoch_loss)
+    print(f"{epoch=}: {train_ppl=} {train_epoch_loss=}")
+
+stop_time=time.time()
+time_training =stop_time - start_time
+print("Training time (seconds): ", time_training)
+
+# Load dataset from the hub and get a sample
+def get_prediction(example):
+    input_review = clean_doc(example, word_segment=False, max_length=max_input_length, lower_case=True)
+    if task == "pair":
+        prompt = f"""[INST] Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:
+[/INST]"""
+    elif task == "triplet":
+        prompt = f"""[INST] Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:
+[/INST]"""
+    elif task == "quadruplet":
+        prompt = f"""[INST] Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:
+[/INST]"""
+    
+    prompt = prompt.replace("..", ".")
+    input_ids = tokenizer(prompt, max_length=max_input_length, return_tensors="pt", padding="max_length", truncation=True).input_ids.cuda()
+    outputs = model.generate(input_ids=input_ids, max_new_tokens=max_output_length, eos_token_id=tokenizer.eos_token_id)
+    preds = outputs[:, max_input_length:].detach().cpu().numpy()
+    label = tokenizer.batch_decode(preds, skip_special_tokens=True)
+    return label
+
+input_test, output_test = create_instruction_input_output(df_test, task=task)
+
+import time
+start_time= time.time() # set the time at which inference started
+
+y_pred = []
+for text in input_test:
+    pred = get_prediction(text)
+    y_pred.append(pred)
+
+stop_time=time.time()
+inference_time =stop_time - start_time
+print("Inference time (seconds): ", inference_time)
+
+df = pd.DataFrame(list(zip(input_test, output_test, y_pred)),
+               columns =['text','y_true', 'y_pred'])
+df.to_csv(path_output + model_id.replace("/", "_") + ".csv",index=False)
+df.head()
+
+results = eval_absa(df.y_pred.tolist(), df.y_true.tolist())
+scores = "Accuracy: " + str(results['accuracy']) \
+            + "\nPrecision: " + str(results['precision']) \
+            + "\nRecall: " + str(results['recall']) \
+            + "\nF1-score: " + str(results['f1']) \
+            + "\nTraining time: " + str(time_training) \
+            + "\nInference time: " + str(inference_time)
+
+text_score = "Model: " + model_id + "\n" + scores + "\n\n"
+with open(score_output_path, 'a') as file:
+    file.write(text_score)
+
+print("Model: ", model_id)
+print(scores)
