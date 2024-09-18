@@ -31,7 +31,7 @@ def get_quadruplet_output(labels):
     quads = labels.strip().strip('{}')
     quadruplets = [] 
     for quad in quads:
-        quadruplet = get_quadruplet_output(quad)
+        quadruplet = get_quadruplet(quad)
         quadruplets.append(quadruplet)
         output_text = ' và '.join(quadruplets)
     
