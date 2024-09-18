@@ -5,3 +5,4 @@ sentencepiece
 accelerate
 torch
 peft
+pyvi

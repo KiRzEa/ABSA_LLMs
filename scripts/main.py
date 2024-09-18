@@ -59,7 +59,7 @@ def create_instruction_input_output(df, task):
     input_text = []
     output_text = []
     for index, row in df.iterrows():
-        input_review = clean_doc(row['input'], word_segment=False, max_length=max_input_length,lower_case=True)
+        input_review = clean_doc(row['input'], word_segment=False, max_length=512,lower_case=True)
         if task == "pair":
             completion = row['output']
             prompt = f"""[INST] Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
@@ -143,10 +143,6 @@ dataset = DatasetDict()
 dataset['train'] = tds
 print(dataset)
 
-
-from torch.utils.data import DataLoader
-from transformers import default_data_collator
-
 # data preprocessing
 if tokenizer.pad_token_id is None:
     tokenizer.pad_token_id = tokenizer.eos_token_id
@@ -203,7 +199,6 @@ train_dataloader = DataLoader(
 )
 
 
-from transformers import get_linear_schedule_with_warmup
 # optimizer and lr scheduler
 optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 lr_scheduler = get_linear_schedule_with_warmup(
@@ -243,7 +238,7 @@ print("Training time (seconds): ", time_training)
 
 # Load dataset from the hub and get a sample
 def get_prediction(example):
-    input_review = clean_doc(example, word_segment=False, max_length=max_input_length, lower_case=True)
+    input_review = clean_doc(example, word_segment=False, max_length=512, lower_case=True)
     if task == "pair":
         prompt = f"""[INST] Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
 Trả lời:
