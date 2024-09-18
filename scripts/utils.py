@@ -16,7 +16,10 @@ def get_triplet_io(triplet):
 def get_quadruplet_output(labels):
 
     def get_quadruplet(quad):
-        ac, at, sp, ot = quad.split(',')
+        try:
+            ac, at, sp, ot = quad.split(',')
+        except:
+            print(quad)
 
         if (at == 'null') and (ot == 'null'):
             completion = f"{mapping_category(os.environ['domain'], ac)} thì {sp}"
