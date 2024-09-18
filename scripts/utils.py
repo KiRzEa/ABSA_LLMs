@@ -1,26 +1,6 @@
 from category_mapping import *
 import os
 
-def parse_output(response, task, domain):
-    _, inversed_category_dict = mapping_category(domain)
-    if task == 'pair':
-        try:
-            final_pairs = []
-            pairs = response.split(' và ')
-            for pair in pairs:
-                try:
-                    words = pair.split()
-                    aspect_category = inversed_category_dict.get(' '.join(words[:-1]), 'None')
-                    sentiment = SENTIMENT_VIET2ENG.get(words[-1], 'None')
-                    final_pairs.append("{" + aspect_category + ", " + sentiment + "}")
-                except:
-                    continue
-    elif task == 'triplet':
-        pass
-    elif task == 'quadruplet':
-        pass
-
-
 def get_output(labels, task: str):
     if task == 'triplet':
         pass
