@@ -49,4 +49,3 @@ def read_data(domain, task):
         df_test = pd.read_csv(f'../data/Quadruplet/{domain}/Test.csv')
     
     return df_train, df_test
-

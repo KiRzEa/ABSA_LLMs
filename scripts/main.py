@@ -113,6 +113,23 @@ def print_trainable_parameters(model):
     )
 
 
+if model.config.architectures[0] == 'BloomForCausalLM':
+    target_modules = [
+                    "query_key_value",
+                    "dense",
+                    "dense_h_to_4h",
+                    "dense_4h_to_h",
+                ]
+elif model.config.architectures[0] == 'LlamaForCausalLM':
+    target_modules=[
+                    "q_proj",
+                    "k_proj",
+                    "v_proj",
+                    "o_proj",
+                    "gate_proj",
+                    "up_proj",
+                    "down_proj",
+                ]
 
 peft_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
@@ -120,15 +137,7 @@ peft_config = LoraConfig(
         r=8, # Lora attention dimension.
         lora_alpha=32, # the alpha parameter for Lora scaling.
         lora_dropout=0.05, # the dropout probability for Lora layers.
-        target_modules=[
-            "q_proj",
-            "k_proj",
-            "v_proj",
-            "o_proj",
-            "gate_proj",
-            "up_proj",
-            "down_proj",
-        ],
+        target_modules=target_modules,
 )
 
 model = get_peft_model(model, peft_config)
