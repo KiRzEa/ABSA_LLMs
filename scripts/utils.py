@@ -47,4 +47,6 @@ def read_data(domain, task):
     elif task == 'quadruplet':
         df_train = pd.read_csv(f'../data/Quadruplet/{domain}/Train.csv')
         df_test = pd.read_csv(f'../data/Quadruplet/{domain}/Test.csv')
+    
+    return df_train, df_test
 
