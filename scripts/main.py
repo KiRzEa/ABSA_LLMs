@@ -302,7 +302,7 @@ scores = "Accuracy: " + str(results['acc']) \
             + "\nInference time: " + str(inference_time)
 
 text_score = "Model: " + model_id + "\n" + scores + "\n\n"
-with open(score_output_path, 'a') as file:
+with open('score.txt', 'a') as file:
     file.write(text_score)
 
 print("Model: ", model_id)
