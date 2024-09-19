@@ -294,7 +294,7 @@ df.to_csv(model_id.replace("/", "_") + ".csv",index=False)
 df.head()
 
 results = eval_absa(df.y_pred.tolist(), df.y_true.tolist())
-scores = "Accuracy: " + str(results['accuracy']) \
+scores = "Accuracy: " + str(results['acc']) \
             + "\nPrecision: " + str(results['precision']) \
             + "\nRecall: " + str(results['recall']) \
             + "\nF1-score: " + str(results['f1']) \
