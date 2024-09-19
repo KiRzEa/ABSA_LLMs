@@ -13,8 +13,9 @@ def get_output(labels, task: str):
 def get_triplet_io(triplet):
     pass
 
-def get_quadruplet_output(labels):
-    def get_quadruplet(quad):
+def get_quadruplet_output(labels, prompt_format=1):
+
+    def get_quadruplet_1(quad):
         ac, at, sp, ot = quad.split(',')
 
         if (at == 'null') and (ot == 'null'):
@@ -26,12 +27,25 @@ def get_quadruplet_output(labels):
             completion = f"{mapping_category(os.environ['domain'], ac, 'vie')} thì {SENTIMENT_ENG2VIET[sp]} bởi vì {at} thì {ot}"
         
         return completion
+
+    def get_quadruplet_2(quad):
+        ac, at, sp, ot = quad.split(',')
+
+        if (at == 'null') and (ot == 'null'):
+            completion = f"{mapping_category(os.environ['domain'], ac, 'vie')}::{SENTIMENT_ENG2VIET[sp]}"
+        else:
+            completion = f"{mapping_category(os.environ['domain'], ac, 'vie')}::{SENTIMENT_ENG2VIET[sp]}::{at}::{ot}"
+        
+        return completion
     
     quads = labels.split(';')
     quadruplets = [] 
     for quad in quads:
         quad = quad.strip().strip('{}')
-        quadruplet = get_quadruplet(quad)
+        if prompt_format == 1:
+            quadruplet = get_quadruplet_1(quad)
+        elif prompt_format == 2:
+            quadruplet = get_quadruplet_2(quad)
         quadruplets.append(quadruplet)
     output_text = ' và '.join(quadruplets)
     
