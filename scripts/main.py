@@ -25,6 +25,7 @@ parser.add_argument("--task", choices=["pair", "triplet", "quadruplet"])
 parser.add_argument("--lr", type=float, default=2e-4)
 parser.add_argument("--num_epochs", type=int, default=10)
 parser.add_argument("--batch_size", type=int, default=16)
+parser.add_arguemtn("--lora_rank", type=int, default=8)
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -39,6 +40,7 @@ lr = args.lr
 num_epochs = args.num_epochs
 batch_size = args.batch_size
 os.environ['domain'] = domain
+r = args.lora_rank
 #======================================
 print("="*50)
 print("[INFO CUDA is Available: ",torch.cuda.is_available())
@@ -134,7 +136,7 @@ elif model.config.architectures[0] == 'LlamaForCausalLM':
 peft_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
         inference_mode=False,
-        r=8, # Lora attention dimension.
+        r=r, # Lora attention dimension.
         lora_alpha=32, # the alpha parameter for Lora scaling.
         lora_dropout=0.05, # the dropout probability for Lora layers.
         target_modules=target_modules,
