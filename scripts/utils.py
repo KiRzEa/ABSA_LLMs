@@ -18,12 +18,12 @@ def get_quadruplet_output(labels):
         ac, at, sp, ot = quad.split(',')
 
         if (at == 'null') and (ot == 'null'):
-            completion = f'{mapping_category(os.environ['domain'], ac, 'vie')} thì {SENTIMENT_ENG2VIET[sp]}'
+            completion = f"{mapping_category(os.environ['domain'], ac, 'vie')} thì {SENTIMENT_ENG2VIET[sp]}"
         else:
             at = 'nó' if at == 'null' else at
             ot = f'#{SENTIMENT_ENG2VIET[sp]}' if ot == 'null' else ot
 
-            completion = f'{mapping_category(os.environ['domain'], ac, 'vie')} thì {SENTIMENT_ENG2VIET[sp]} bởi vì {at} thì {ot}'
+            completion = f"{mapping_category(os.environ['domain'], ac, 'vie')} thì {SENTIMENT_ENG2VIET[sp]} bởi vì {at} thì {ot}"
         
         return completion
     
