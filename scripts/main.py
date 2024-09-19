@@ -26,7 +26,7 @@ parser.add_argument("--lr", type=float, default=2e-4)
 parser.add_argument("--num_epochs", type=int, default=10)
 parser.add_argument("--batch_size", type=int, default=16)
 parser.add_argument("--lora_rank", type=int, default=8)
-parser.add_argument("--prompt_format", choices=[1, 2], default=1)
+parser.add_argument("--prompt_format", choices=['1', '2'], default='1')
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
