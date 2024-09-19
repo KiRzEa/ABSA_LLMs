@@ -265,7 +265,7 @@ Trả lời:
     input_ids = tokenizer(prompt, max_length=max_input_length, return_tensors="pt", padding="max_length", truncation=True).input_ids.cuda()
     outputs = model.generate(input_ids=input_ids, max_new_tokens=max_output_length, eos_token_id=tokenizer.eos_token_id)
     preds = outputs[:, max_input_length:].detach().cpu().numpy()
-    label = tokenizer.batch_decode(preds, skip_special_tokens=True)
+    label = tokenizer.decode(preds, skip_special_tokens=True)
     return label
 
 input_test, output_test = create_instruction_input_output(df_test, task=task)
@@ -274,9 +274,13 @@ import time
 start_time= time.time() # set the time at which inference started
 
 y_pred = []
+cnt = 0
 for text in tqdm(input_test, desc='[INFO] Running inference...'):
+    cnt += 1
     pred = get_prediction(text)
     y_pred.append(pred)
+    if cnt % 5 == 0:
+        print(pred)
 
 stop_time=time.time()
 inference_time =stop_time - start_time
