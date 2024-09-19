@@ -247,7 +247,7 @@ print("Training time (seconds): ", time_training)
 
 # Load dataset from the hub and get a sample
 def get_prediction(example):
-    input_review = clean_doc(example, word_segment=False, max_length=512, lower_case=True)
+    input_review = clean_doc(example, word_segment=False, max_length=max_input_length, lower_case=True)
     if task == "pair":
         prompt = f"""[INST] Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
 Trả lời:
@@ -274,7 +274,7 @@ import time
 start_time= time.time() # set the time at which inference started
 
 y_pred = []
-for text in input_test:
+for text in tqdm(input_test, desc='[INFO] Running inference...'):
     pred = get_prediction(text)
     y_pred.append(pred)
 
@@ -284,7 +284,7 @@ print("Inference time (seconds): ", inference_time)
 
 df = pd.DataFrame(list(zip(input_test, output_test, y_pred)),
                columns =['text','y_true', 'y_pred'])
-df.to_csv(path_output + model_id.replace("/", "_") + ".csv",index=False)
+df.to_csv(model_id.replace("/", "_") + ".csv",index=False)
 df.head()
 
 results = eval_absa(df.y_pred.tolist(), df.y_true.tolist())
