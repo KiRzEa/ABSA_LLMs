@@ -72,19 +72,16 @@ def create_instruction_input_output(df, task):
         input_review = clean_doc(row['input'], word_segment=False, max_length=512,lower_case=True)
         if task == "pair":
             completion = row['output']
-            prompt = f"""[INST] Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:
-[/INST]"""
+            prompt = f"""Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:"""
         elif task == "triplet":
             completion = get_output(row['output'], task=task)
-            prompt = f"""[INST] Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:
-[/INST]"""
+            prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:"""
         elif task == "quadruplet":
             completion = get_output(row['output'], task=task)
-            prompt = f"""[INST] Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:
-[/INST]"""
+            prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:"""
         
         prompt = prompt.replace("..", ".")
         if add_instruction:
@@ -277,17 +274,15 @@ print("Training time (seconds): ", time_training)
 def get_prediction(example):
     input_review = clean_doc(example, word_segment=False, max_length=max_input_length, lower_case=True)
     if task == "pair":
-        prompt = f"""[INST] Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
+        prompt = f"""Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
 Trả lời:
-[/INST]"""
+"""
     elif task == "triplet":
-        prompt = f"""[INST] Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:
-[/INST]"""
+        prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:"""
     elif task == "quadruplet":
-        prompt = f"""[INST] Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:
-[/INST]"""
+        prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: "{input_review}"
+Trả lời:"""
     
     prompt = prompt.replace("..", ".")
     prompt = prompt if add_instruction else input_review
