@@ -28,6 +28,7 @@ parser.add_argument("--batch_size", type=int, default=16)
 parser.add_argument("--lora_rank", type=int, default=8)
 parser.add_argument("--prompt_format", choices=['1', '2'], default='1')
 parser.add_argument("--model_type", choices=['seq2seq', 'causal'], default='causal')
+parser.add_argument("--add_instruction", action='store_true')
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -44,6 +45,7 @@ batch_size = args.batch_size
 os.environ['domain'] = domain
 r = args.lora_rank
 model_type = args.model_type
+add_instruction = args.add_instruction
 #======================================
 print("="*50)
 print("[INFO CUDA is Available: ",torch.cuda.is_available())
@@ -54,6 +56,7 @@ print("[INFO] Number of Epochs: ", num_epochs)
 print("[INFO] Batch Size: ", batch_size)
 print("[INFO] LoRA Rank:", r)
 print("[INFO] Type of Model:", model_type)
+print("[INFO] Using Instruction:", add_instruction)
 print("="*50)
 #======================================
 
@@ -84,7 +87,10 @@ Trả lời:
 [/INST]"""
         
         prompt = prompt.replace("..", ".")
-        input_text.append(prompt)
+        if add_instruction:
+            input_text.append(prompt)
+        else:
+            input_tet.append(input_review)
         output_text.append(completion)
     print(len(input_text),len(output_text))
     return input_text,output_text
