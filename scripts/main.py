@@ -99,7 +99,7 @@ Trả lời:
 # Train
 
 if task == 'pair':
-    input_train, output_train = df_train.input, df_train.output
+    input_train, output_train = create_instruction_input_output(df_train, task=task)
 elif task == 'triplet':
     input_train, output_train = None, None
 elif task == 'quadruplet':
