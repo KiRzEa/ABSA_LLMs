@@ -185,6 +185,9 @@ def preprocess_function(examples):
     model_inputs = tokenizer(inputs)
     labels = tokenizer(targets, add_special_tokens=False)  # don't add bos token because we concatenate with inputs
     for i in range(batch_size):
+        if model_inputs["input_ids"][i][-1] == tokenizer.eos_token_id:
+            model_inputs["input_ids"][i] = model_inputs["input_ids"][i][:-1]
+            model_inputs["attention_mask"][i] = model_inputs["attention_mask"][i][:-1]
         sample_input_ids = model_inputs["input_ids"][i]
         label_input_ids = labels["input_ids"][i] + [tokenizer.eos_token_id]
         # print(i, sample_input_ids, label_input_ids)
