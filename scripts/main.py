@@ -90,7 +90,7 @@ Trả lời:
         if add_instruction:
             input_text.append(prompt)
         else:
-            input_tet.append(input_review)
+            input_text.append(input_review)
         output_text.append(completion)
     print(len(input_text),len(output_text))
     return input_text,output_text
@@ -279,6 +279,7 @@ Trả lời:
 [/INST]"""
     
     prompt = prompt.replace("..", ".")
+    prompt = prompt if add_instruction else input_review
     input_ids = tokenizer(prompt, max_length=max_input_length, return_tensors="pt", padding="max_length", truncation=True).input_ids.cuda()
     outputs = model.generate(input_ids=input_ids, max_new_tokens=max_output_length, eos_token_id=tokenizer.eos_token_id)
     preds = outputs[:, max_input_length:].detach().cpu().numpy()[0]
