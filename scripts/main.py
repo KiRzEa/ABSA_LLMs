@@ -27,7 +27,7 @@ parser.add_argument("--num_epochs", type=int, default=10)
 parser.add_argument("--batch_size", type=int, default=16)
 parser.add_argument("--lora_rank", type=int, default=8)
 parser.add_argument("--prompt_format", choices=['1', '2'], default='1')
-parser.add_argument("--model_type", choices=['seq2seq', 'causal'], default='causal')
+parser.add_argument("--model_type", choices=['seq2seq', 'causal'], default='seq2seq')
 parser.add_argument("--add_instruction", action='store_true')
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
@@ -219,6 +219,14 @@ processed_datasets = dataset.map(
 
 train_dataset = processed_datasets["train"]
 
+print('='*50)
+for i in range(5):
+    example = train_dataset[i]
+    print(df_train.iloc[i].text)
+    print(df_train.iloc[i].label)
+    for column in train_dataset.column_names:
+        print(f"[INFO] {column}: {example[column]}")
+print('='*50)
 
 train_dataloader = DataLoader(
     train_dataset, shuffle=True, collate_fn=default_data_collator, batch_size=batch_size, pin_memory=True
