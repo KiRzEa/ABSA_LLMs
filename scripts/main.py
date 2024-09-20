@@ -218,12 +218,11 @@ processed_datasets = dataset.map(
 )
 
 train_dataset = processed_datasets["train"]
-
 print('='*50)
 for i in range(5):
     example = train_dataset[i]
-    print(df_train.iloc[i].text)
-    print(df_train.iloc[i].label)
+    print('[INFO] Raw text:',dataset['train']['text'][i])
+    print('[INFO] Label:',dataset['train']['label'][i])
     for column in train_dataset.column_names:
         print(f"[INFO] {column}: {example[column]}")
 print('='*50)
