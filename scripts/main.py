@@ -225,6 +225,7 @@ for i in range(5):
     print('[INFO] Label:',dataset['train']['label'][i])
     for column in train_dataset.column_names:
         print(f"[INFO] {column}: {example[column]}")
+    print(f"[INFO] Decoded Text: {tokenizer.decode(example['input_ids'])}")
 print('='*50)
 
 train_dataloader = DataLoader(
