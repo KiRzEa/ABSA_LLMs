@@ -108,7 +108,7 @@ elif task == 'quadruplet':
 train_df = pd.DataFrame(list(zip(input_train, output_train)), columns =['text', 'label'])
 
 tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir="models/")
-model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto",cache_dir="models/") if model_type == 'causal' else AutoModelForSeq2SeqLM.from_pretrained(mapodel_id, device_map="auto",cache_dir="models/")
+model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto",cache_dir="models/") if model_type == 'causal' else AutoModelForSeq2SeqLM.from_pretrained(model_id, device_map="auto",cache_dir="models/")
 
 
 def print_trainable_parameters(model):
