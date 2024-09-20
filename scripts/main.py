@@ -146,17 +146,16 @@ elif model.config.architectures[0] == 'LlamaForCausalLM':
 else:
     target_modules = None
 
-if target_modules:
-    peft_config = LoraConfig(
-            task_type=TaskType.CAUSAL_LM,
-            inference_mode=False,
-            r=r, # Lora attention dimension.
-            lora_alpha=32, # the alpha parameter for Lora scaling.
-            lora_dropout=0.05, # the dropout probability for Lora layers.
-            target_modules=target_modules,
-    )
+peft_config = LoraConfig(
+        task_type=TaskType.CAUSAL_LM if model_type == 'causal' else TaskType.SEQ_2_SEQ_LM,
+        inference_mode=False,
+        r=r, # Lora attention dimension.
+        lora_alpha=32, # the alpha parameter for Lora scaling.
+        lora_dropout=0.05, # the dropout probability for Lora layers.
+        target_modules=target_modules,
+)
 
-    model = get_peft_model(model, peft_config)
+model = get_peft_model(model, peft_config)
 
 print_trainable_parameters(model)
 
