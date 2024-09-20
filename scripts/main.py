@@ -27,6 +27,7 @@ parser.add_argument("--num_epochs", type=int, default=10)
 parser.add_argument("--batch_size", type=int, default=16)
 parser.add_argument("--lora_rank", type=int, default=8)
 parser.add_argument("--prompt_format", choices=['1', '2'], default='1')
+parser.add_argument("--model_type", choices=['seq2seq', 'causal'], default='causal')
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -42,6 +43,7 @@ num_epochs = args.num_epochs
 batch_size = args.batch_size
 os.environ['domain'] = domain
 r = args.lora_rank
+model_type = args.model_type
 #======================================
 print("="*50)
 print("[INFO CUDA is Available: ",torch.cuda.is_available())
@@ -50,6 +52,8 @@ print("[INFO] Model ID: ", model_id)
 print("[INFO] Learning Rate: ", lr)
 print("[INFO] Number of Epochs: ", num_epochs)
 print("[INFO] Batch Size: ", batch_size)
+print("[INFO] LoRA Rank:", r)
+print("[INFO] Type of Model:", model_type)
 print("="*50)
 #======================================
 
@@ -98,7 +102,7 @@ elif task == 'quadruplet':
 train_df = pd.DataFrame(list(zip(input_train, output_train)), columns =['text', 'label'])
 
 tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir="models/")
-model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto",cache_dir="models/")
+model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto",cache_dir="models/") if model_type == 'causal' else AutoModelForSeq2SeqLM.from_pretrained(mapodel_id, device_map="auto",cache_dir="models/")
 
 
 def print_trainable_parameters(model):
@@ -133,18 +137,23 @@ elif model.config.architectures[0] == 'LlamaForCausalLM':
                     "up_proj",
                     "down_proj",
                 ]
+else:
+    target_modules = None
 
-peft_config = LoraConfig(
-        task_type=TaskType.CAUSAL_LM,
-        inference_mode=False,
-        r=r, # Lora attention dimension.
-        lora_alpha=32, # the alpha parameter for Lora scaling.
-        lora_dropout=0.05, # the dropout probability for Lora layers.
-        target_modules=target_modules,
-)
+if target_modules:
+    peft_config = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            inference_mode=False,
+            r=r, # Lora attention dimension.
+            lora_alpha=32, # the alpha parameter for Lora scaling.
+            lora_dropout=0.05, # the dropout probability for Lora layers.
+            target_modules=target_modules,
+    )
 
-model = get_peft_model(model, peft_config)
+    model = get_peft_model(model, peft_config)
+
 print_trainable_parameters(model)
+
 
 max_input_length = max([len(tokenizer(text)['input_ids']) for text in input_train])
 max_output_length = max([len(tokenizer(text)['input_ids']) for text in output_train])
