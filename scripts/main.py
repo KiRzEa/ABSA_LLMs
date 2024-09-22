@@ -169,13 +169,16 @@ print(dataset)
 # data preprocessing
 if tokenizer.pad_token_id is None:
     tokenizer.pad_token_id = tokenizer.eos_token_id
-max_input_length = max([len(tokenizer(text)['input_ids']) for text in input_train])
+if model_type == 'causal':
+    max_input_length = max([len(tokenizer(text + label)['input_ids']) for text, label in zip(input_train, output_train)])
+else:
+    max_input_length = max([len(tokenizer(text)['input_ids']) for text in input_train])
 max_output_length = max([len(tokenizer(text)['input_ids']) for text in output_train])
 print(max_input_length)
 print(max_output_length)
 
 
-def preprocess_function(examples):
+def preprocess_function_for_causal_lm(examples):
     batch_size = len(examples["text"])
     inputs = [item + " " for item in examples["text"]]
     targets = examples["label"]
@@ -208,8 +211,19 @@ def preprocess_function(examples):
     model_inputs["labels"] = labels["input_ids"]
     return model_inputs
 
+def preprocess_function_for_seq2seq_lm(examples):
+    inputs = tokenizer(examples['text'], max_length=max_input_length, padding='max_length', truncation=True)
+    labels = tokenizer(examples['label'], max_length=max_output_length, padding='max_length', truncation=True)
+    labels['input_ids'] = [
+        [input_id if input_id != tokenizer.pad_token_id else -100 for input_id in input_ids] for input_ids in labels['input_ids']
+    ]
+    inputs['labels'] = labels['input_ids']
+    assert len(inputs['labels'] == inputs['input_ids'])
+    return inputs
+
+
 processed_datasets = dataset.map(
-    preprocess_function,
+    preprocess_function_for_causal_lm if model_type == 'causal' else preprocess_function_for_seq2seq_lm,
     batched=True,
     num_proc=1,
     remove_columns=dataset["train"].column_names,
