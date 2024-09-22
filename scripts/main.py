@@ -212,8 +212,8 @@ def preprocess_function_for_causal_lm(examples):
     return model_inputs
 
 def preprocess_function_for_seq2seq_lm(examples):
-    inputs = tokenizer(examples['text'], max_length=max_input_length, padding='max_length', truncation=True)
-    labels = tokenizer(examples['label'], max_length=max_output_length, padding='max_length', truncation=True)
+    inputs = tokenizer(text_target=examples['text'], max_length=max_input_length, padding='max_length', truncation=True)
+    labels = tokenizer(text_target=examples['label'], max_length=max_output_length, padding='max_length', truncation=True)
     labels['input_ids'] = [
         [input_id if input_id != tokenizer.pad_token_id else -100 for input_id in input_ids] for input_ids in labels['input_ids']
     ]
