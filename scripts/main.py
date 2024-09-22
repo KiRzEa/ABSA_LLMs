@@ -218,7 +218,7 @@ def preprocess_function_for_seq2seq_lm(examples):
         [input_id if input_id != tokenizer.pad_token_id else -100 for input_id in input_ids] for input_ids in labels['input_ids']
     ]
     inputs['labels'] = labels['input_ids']
-    assert len(inputs['labels'] == len(inputs['input_ids']))
+    assert len(inputs['labels']) == len(inputs['input_ids'])
     return inputs
 
 
