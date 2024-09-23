@@ -15,7 +15,7 @@ from datasets import Dataset, DatasetDict
 from utils import *
 from eval_utils import *
 from preprocessing import *
-
+from init_trainer import *
 
 parser = argparse.ArgumentParser()
 
@@ -247,38 +247,42 @@ train_dataloader = DataLoader(
 )
 
 
-# optimizer and lr scheduler
-optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
-lr_scheduler = get_linear_schedule_with_warmup(
-    optimizer=optimizer,
-    num_warmup_steps=0,
-    num_training_steps=(len(train_dataloader) * num_epochs),
-)
+# # optimizer and lr scheduler
+# optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+# lr_scheduler = get_linear_schedule_with_warmup(
+#     optimizer=optimizer,
+#     num_warmup_steps=0,
+#     num_training_steps=(len(train_dataloader) * num_epochs),
+# )
 
-
+if model_type == 'seq2seq':
+    trainer = init_trainer_seq2seq(model, tokenizer, train_dataset, lr, batch_size, num_epochs)
+else:
+    trainer = init_trainer_causal(model, tokenizer, train_dataset, lr, batch_size, num_epochs)
 
 import time
 start_time= time.time() # set the time at which inference started
 
-# training and evaluation
-for epoch in range(num_epochs):
-    model.train()
-    total_loss = 0
-    for step, batch in enumerate(tqdm(train_dataloader)):
-        batch = {k: v.to(device) for k, v in batch.items()}
-        #         print(batch)
-        #         print(batch["input_ids"].shape)
-        outputs = model(**batch)
-        loss = outputs.loss
-        total_loss += loss.detach().float()
-        loss.backward()
-        optimizer.step()
-        lr_scheduler.step()
-        optimizer.zero_grad()
+trainer.train()
+# # training and evaluation
+# for epoch in range(num_epochs):
+#     model.train()
+#     total_loss = 0
+#     for step, batch in enumerate(tqdm(train_dataloader)):
+#         batch = {k: v.to(device) for k, v in batch.items()}
+#         #         print(batch)
+#         #         print(batch["input_ids"].shape)
+#         outputs = model(**batch)
+#         loss = outputs.loss
+#         total_loss += loss.detach().float()
+#         loss.backward()
+#         optimizer.step()
+#         lr_scheduler.step()
+#         optimizer.zero_grad()
 
-    train_epoch_loss = total_loss / len(train_dataloader)
-    train_ppl = torch.exp(train_epoch_loss)
-    print(f"{epoch=}: {train_ppl=} {train_epoch_loss=}")
+#     train_epoch_loss = total_loss / len(train_dataloader)
+#     train_ppl = torch.exp(train_epoch_loss)
+#     print(f"{epoch=}: {train_ppl=} {train_epoch_loss=}")
 
 stop_time=time.time()
 time_training =stop_time - start_time
