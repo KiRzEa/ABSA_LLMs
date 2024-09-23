@@ -257,12 +257,14 @@ lr_scheduler = get_linear_schedule_with_warmup(
     num_warmup_steps=0,
     num_training_steps=(len(train_dataloader) * num_epochs),
 )
-
-if model_type == 'seq2seq':
-    trainer = init_trainer_seq2seq(model, tokenizer, train_dataset, lr, batch_size, num_epochs)
+if using_trainer:
+    if model_type == 'seq2seq':
+        trainer = init_trainer_seq2seq(model, tokenizer, train_dataset, lr, batch_size, num_epochs)
+    else:
+        trainer = init_trainer_causal(model, tokenizer, train_dataset, lr, batch_size, num_epochs)
 else:
-    trainer = init_trainer_causal(model, tokenizer, train_dataset, lr, batch_size, num_epochs)
-
+    trainer = None
+    
 import time
 start_time= time.time() # set the time at which inference started
 

@@ -15,12 +15,13 @@ from transformers import (default_data_collator,
 
 def init_trainer_seq2seq(model, tokenizer, tokenized_dataset, learning_rate, batch_size, num_epochs):
     # Data collator
-    data_collator = DataCollatorForSeq2Seq(
-        tokenizer,
-        model=model,
-        label_pad_token_id=-100,
-        pad_to_multiple_of=16
-    )
+    # data_collator = DataCollatorForSeq2Seq(
+    #     tokenizer,
+    #     model=model,
+    #     label_pad_token_id=-100,
+    #     pad_to_multiple_of=16
+    # )
+    data_collator = default_data_collator
 
     # Define training args
     training_args = Seq2SeqTrainingArguments(
