@@ -29,6 +29,7 @@ parser.add_argument("--lora_rank", type=int, default=8)
 parser.add_argument("--prompt_format", choices=['1', '2'], default='1')
 parser.add_argument("--model_type", choices=['seq2seq', 'causal'], default='seq2seq')
 parser.add_argument("--add_instruction", action='store_true')
+parser.add_argument("--using_trainer", action='store_true')
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -46,6 +47,7 @@ os.environ['domain'] = domain
 r = args.lora_rank
 model_type = args.model_type
 add_instruction = args.add_instruction
+using_trainer = args.using_trainer
 #======================================
 print("="*50)
 print("[INFO CUDA is Available: ",torch.cuda.is_available())
@@ -57,6 +59,7 @@ print("[INFO] Batch Size: ", batch_size)
 print("[INFO] LoRA Rank:", r)
 print("[INFO] Type of Model:", model_type)
 print("[INFO] Using Instruction:", add_instruction)
+print("[INFO] Using Trainer:", using_trainer)
 print("="*50)
 #======================================
 
@@ -247,13 +250,13 @@ train_dataloader = DataLoader(
 )
 
 
-# # optimizer and lr scheduler
-# optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
-# lr_scheduler = get_linear_schedule_with_warmup(
-#     optimizer=optimizer,
-#     num_warmup_steps=0,
-#     num_training_steps=(len(train_dataloader) * num_epochs),
-# )
+# optimizer and lr scheduler
+optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+lr_scheduler = get_linear_schedule_with_warmup(
+    optimizer=optimizer,
+    num_warmup_steps=0,
+    num_training_steps=(len(train_dataloader) * num_epochs),
+)
 
 if model_type == 'seq2seq':
     trainer = init_trainer_seq2seq(model, tokenizer, train_dataset, lr, batch_size, num_epochs)
@@ -263,26 +266,28 @@ else:
 import time
 start_time= time.time() # set the time at which inference started
 
-trainer.train()
-# # training and evaluation
-# for epoch in range(num_epochs):
-#     model.train()
-#     total_loss = 0
-#     for step, batch in enumerate(tqdm(train_dataloader)):
-#         batch = {k: v.to(device) for k, v in batch.items()}
-#         #         print(batch)
-#         #         print(batch["input_ids"].shape)
-#         outputs = model(**batch)
-#         loss = outputs.loss
-#         total_loss += loss.detach().float()
-#         loss.backward()
-#         optimizer.step()
-#         lr_scheduler.step()
-#         optimizer.zero_grad()
+if using_trainer:
+    trainer.train()
+else:
+# training and evaluation
+    for epoch in range(num_epochs):
+        model.train()
+        total_loss = 0
+        for step, batch in enumerate(tqdm(train_dataloader)):
+            batch = {k: v.to(device) for k, v in batch.items()}
+            #         print(batch)
+            #         print(batch["input_ids"].shape)
+            outputs = model(**batch)
+            loss = outputs.loss
+            total_loss += loss.detach().float()
+            loss.backward()
+            optimizer.step()
+            lr_scheduler.step()
+            optimizer.zero_grad()
 
-#     train_epoch_loss = total_loss / len(train_dataloader)
-#     train_ppl = torch.exp(train_epoch_loss)
-#     print(f"{epoch=}: {train_ppl=} {train_epoch_loss=}")
+        train_epoch_loss = total_loss / len(train_dataloader)
+        train_ppl = torch.exp(train_epoch_loss)
+        print(f"{epoch=}: {train_ppl=} {train_epoch_loss=}")
 
 stop_time=time.time()
 time_training =stop_time - start_time

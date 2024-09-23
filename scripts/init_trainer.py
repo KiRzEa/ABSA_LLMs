@@ -44,11 +44,7 @@ def init_trainer_seq2seq(model, tokenizer, tokenized_dataset, learning_rate, bat
     return trainer
 
 def init_trainer_causal(model, tokenizer, tokenized_dataset, learning_rate, batch_size, num_epochs):
-    data_collator = DataCollatorForLanguageModeling(
-        tokenizer=tokenizer,
-        pad_to_multiple_of=16,
-        mlm=False
-    )
+    data_collator = default_data_collator
 
     # Define training args
     training_args = TrainingArguments(
