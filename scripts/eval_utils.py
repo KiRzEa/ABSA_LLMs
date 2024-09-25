@@ -7,7 +7,9 @@ def eval_absa(y_pred, y_true):
     n_total = 0
     for pred, gold in zip(y_pred, y_true):
         pred = list(set(pred.split(' và ')))
+        pred = [aspect.strip() for aspect in pred]
         gold = list(set(gold.split(' và ')))
+        gold = [aspect.strip() for aspect in gold]
         n_total += len(gold)
         for aspect in gold:
             if aspect in pred:
