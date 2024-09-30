@@ -13,7 +13,7 @@ from transformers import (default_data_collator,
 
 
 
-def init_trainer_seq2seq(model, tokenizer, tokenized_dataset, learning_rate, batch_size, num_epochs):
+def init_trainer_seq2seq(model, tokenizer, tokenized_dataset, learning_rate, batch_size, num_epochs, gradient_accumulation_steps):
     # Data collator
     # data_collator = DataCollatorForSeq2Seq(
     #     tokenizer,
@@ -44,7 +44,7 @@ def init_trainer_seq2seq(model, tokenizer, tokenized_dataset, learning_rate, bat
     )
     return trainer
 
-def init_trainer_causal(model, tokenizer, tokenized_dataset, learning_rate, batch_size, num_epochs):
+def init_trainer_causal(model, tokenizer, tokenized_dataset, learning_rate, batch_size, num_epochs, gradient_accumulation_steps):
     data_collator = default_data_collator
 
     # Define training args
@@ -57,6 +57,7 @@ def init_trainer_causal(model, tokenizer, tokenized_dataset, learning_rate, batc
         logging_strategy="steps",
         logging_steps=500,
         save_strategy="no",
+        gradient_accumulation_steps=gradient_accumulation_steps
     )
 
     # Create Trainer instance

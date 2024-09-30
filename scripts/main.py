@@ -30,6 +30,7 @@ parser.add_argument("--prompt_format", choices=['1', '2'], default='1')
 parser.add_argument("--model_type", choices=['seq2seq', 'causal'], default='seq2seq')
 parser.add_argument("--add_instruction", action='store_true')
 parser.add_argument("--using_trainer", action='store_true')
+parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -48,6 +49,7 @@ r = args.lora_rank
 model_type = args.model_type
 add_instruction = args.add_instruction
 using_trainer = args.using_trainer
+gradient_accumulation_steps = args.gradient_accumulation_steps
 #======================================
 print("="*50)
 print("[INFO CUDA is Available: ",torch.cuda.is_available())
@@ -60,6 +62,7 @@ print("[INFO] LoRA Rank:", r)
 print("[INFO] Type of Model:", model_type)
 print("[INFO] Using Instruction:", add_instruction)
 print("[INFO] Using Trainer:", using_trainer)
+print("[INFO] Gradient Accumulation Steps:", gradient_accumulation_steps)
 print("="*50)
 #======================================
 
@@ -82,7 +85,7 @@ Trả lời:"""
             prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
 Trả lời:"""
         elif task == "quadruplet":
-            completion = get_output(row['output'], task=task)
+            completion = row['output']
             prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: "{input_review}"
 Trả lời:"""
         
@@ -259,9 +262,9 @@ lr_scheduler = get_linear_schedule_with_warmup(
 )
 if using_trainer:
     if model_type == 'seq2seq':
-        trainer = init_trainer_seq2seq(model, tokenizer, train_dataset, lr, batch_size, num_epochs)
+        trainer = init_trainer_seq2seq(model, tokenizer, train_dataset, lr, batch_size, num_epochs, gradient_accumulation_steps)
     else:
-        trainer = init_trainer_causal(model, tokenizer, train_dataset, lr, batch_size, num_epochs)
+        trainer = init_trainer_causal(model, tokenizer, train_dataset, lr, batch_size, num_epochs, gradient_accumulation_steps)
 else:
     trainer = None
     

@@ -24,7 +24,7 @@ def get_quadruplet_output(labels, prompt_format=1):
             at = 'nó' if at == 'null' else at
             ot = f'#{SENTIMENT_ENG2VIET[sp]}' if ot == 'null' else ot
 
-            completion = f"{mapping_category(os.environ['domain'], ac, 'vie')} {SENTIMENT_ENG2VIET[sp]} bởi vì {at} {ot}"
+            completion = f"{mapping_category(os.environ['domain'], ac, 'vie')} {SENTIMENT_ENG2VIET[sp]} vì {at} {ot}"
         
         return completion
 
