@@ -80,14 +80,17 @@ def create_instruction_input_output(df, task):
         input_review = clean_doc(row['input'], word_segment=False, max_length=512,lower_case=True)
         if task == "pair":
             completion = row['output']
+            prompt = get_prompt(input_review, prompt_format, task)
             prompt = f"""Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
 Trả lời:"""
         elif task == "triplet":
             completion = get_output(row['output'], task=task)
+            prompt = get_prompt(input_review, prompt_format, task)
             prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
 Trả lời:"""
         elif task == "quadruplet":
             completion = row['output']
+            prompt = get_prompt(input_review, prompt_format, task)
             prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: "{input_review}"
 Trả lời:"""
         
@@ -160,7 +163,8 @@ peft_config = LoraConfig(
         target_modules=target_modules,
 )
 
-model = get_peft_model(model, peft_config)
+if model_type != 'seq2seq':
+    model = get_peft_model(model, peft_config)
 
 print_trainable_parameters(model)
 
