@@ -30,7 +30,7 @@ parser.add_argument("--prompt_format", choices=['1', '2'], default='1')
 parser.add_argument("--model_type", choices=['seq2seq', 'causal'], default='seq2seq')
 parser.add_argument("--add_instruction", action='store_true')
 parser.add_argument("--using_trainer", action='store_true')
-parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
+parser.add_argument("--gradient_accumulation_steps", type=int, default=None)
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -50,6 +50,8 @@ model_type = args.model_type
 add_instruction = args.add_instruction
 using_trainer = args.using_trainer
 gradient_accumulation_steps = args.gradient_accumulation_steps
+if not gradient_accumulation_steps:
+    gradient_accumulation_steps = 64 // batch_size
 #======================================
 print("="*50)
 print("[INFO CUDA is Available: ",torch.cuda.is_available())
@@ -261,10 +263,7 @@ lr_scheduler = get_linear_schedule_with_warmup(
     num_training_steps=(len(train_dataloader) * num_epochs),
 )
 if using_trainer:
-    if model_type == 'seq2seq':
-        trainer = init_trainer_seq2seq(model, tokenizer, train_dataset, lr, batch_size, num_epochs, gradient_accumulation_steps)
-    else:
-        trainer = init_trainer_causal(model, tokenizer, train_dataset, lr, batch_size, num_epochs, gradient_accumulation_steps)
+    trainer = init_trainer(model, tokenizer, train_dataset, lr, batch_size, num_epochs, gradient_accumulation_steps)
 else:
     trainer = None
     
