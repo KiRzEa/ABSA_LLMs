@@ -53,6 +53,7 @@ using_trainer = args.using_trainer
 gradient_accumulation_steps = args.gradient_accumulation_steps
 if not gradient_accumulation_steps:
     gradient_accumulation_steps = 64 // batch_size
+prompt_format = args.prompt_format
 #======================================
 print("="*50)
 print("[INFO CUDA is Available: ",torch.cuda.is_available())
@@ -66,6 +67,7 @@ print("[INFO] Type of Model:", model_type)
 print("[INFO] Using Instruction:", add_instruction)
 print("[INFO] Using Trainer:", using_trainer)
 print("[INFO] Gradient Accumulation Steps:", gradient_accumulation_steps)
+print("[INFO] Prompt Format:", prompt_format)
 print("="*50)
 #======================================
 
