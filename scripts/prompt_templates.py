@@ -2,7 +2,8 @@ PROMPT_1 = """<|im_start|>system
 Bạn là một trợ lí AI hữu ích. Hãy trả lời người dùng một cách chính xác.
 <|im_end|>
 <|im_start|>user
-{}<|im_end|>"""
+{}<|im_end|>
+<|im_start|>assistant"""
 
 PROMPT_2 = """[INST] <<SYS>>
 Bạn là một trợ lí AI hữu ích. Hãy trả lời người dùng một cách chính xác.
