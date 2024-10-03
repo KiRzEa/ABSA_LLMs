@@ -16,6 +16,7 @@ from utils import *
 from eval_utils import *
 from preprocessing import *
 from init_trainer import *
+from prompt_templates import *
 
 parser = argparse.ArgumentParser()
 
@@ -26,7 +27,7 @@ parser.add_argument("--lr", type=float, default=2e-4)
 parser.add_argument("--num_epochs", type=int, default=10)
 parser.add_argument("--batch_size", type=int, default=16)
 parser.add_argument("--lora_rank", type=int, default=8)
-parser.add_argument("--prompt_format", choices=['1', '2'], default='1')
+parser.add_argument("--prompt_format", choices=['1', '2', '0'], default='0')
 parser.add_argument("--model_type", choices=['seq2seq', 'causal'], default='seq2seq')
 parser.add_argument("--add_instruction", action='store_true')
 parser.add_argument("--using_trainer", action='store_true')
@@ -73,26 +74,13 @@ df_train, df_test = read_data(domain, task)
 text_column = "input"
 label_column = "output"
     
-def create_instruction_input_output(df, task):
+def create_instruction_input_output(df):
     input_text = []
     output_text = []
     for index, row in df.iterrows():
         input_review = clean_doc(row['input'], word_segment=False, max_length=512,lower_case=True)
-        if task == "pair":
-            completion = row['output']
-            prompt = get_prompt(input_review, prompt_format, task)
-            prompt = f"""Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:"""
-        elif task == "triplet":
-            completion = get_output(row['output'], task=task)
-            prompt = get_prompt(input_review, prompt_format, task)
-            prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:"""
-        elif task == "quadruplet":
-            completion = row['output']
-            prompt = get_prompt(input_review, prompt_format, task)
-            prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:"""
+        completion = row['output']
+        prompt = get_prompt(input_review, prompt_format, task)
         
         prompt = prompt.replace("..", ".")
         if add_instruction:
@@ -106,12 +94,7 @@ Trả lời:"""
 #======================================
 # Train
 
-if task == 'pair':
-    input_train, output_train = create_instruction_input_output(df_train, task=task)
-elif task == 'triplet':
-    input_train, output_train = None, None
-elif task == 'quadruplet':
-    input_train, output_train = create_instruction_input_output(df_train, task=task)
+input_train, output_train = create_instruction_input_output(df_train)
 
 train_df = pd.DataFrame(list(zip(input_train, output_train)), columns =['text', 'label'])
 
@@ -226,9 +209,9 @@ def preprocess_function_for_causal_lm(examples):
 def preprocess_function_for_seq2seq_lm(examples):
     inputs = tokenizer(text_target=examples['text'], max_length=max_input_length, padding='max_length', truncation=True)
     labels = tokenizer(text_target=examples['label'], max_length=max_output_length, padding='max_length', truncation=True)
-    # labels['input_ids'] = [
-    #     [input_id if input_id != tokenizer.pad_token_id else -100 for input_id in input_ids] for input_ids in labels['input_ids']
-    # ]
+    labels['input_ids'] = [
+        [input_id if input_id != tokenizer.pad_token_id else -100 for input_id in input_ids] for input_ids in labels['input_ids']
+    ]
     inputs['labels'] = labels['input_ids']
     assert len(inputs['labels']) == len(inputs['input_ids'])
     return inputs
@@ -304,17 +287,7 @@ print("Training time (seconds): ", time_training)
 # Load dataset from the hub and get a sample
 def get_prediction(example):
     input_review = clean_doc(example, word_segment=False, max_length=max_input_length, lower_case=True)
-    if task == "pair":
-        prompt = f"""Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:
-"""
-    elif task == "triplet":
-        prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:"""
-    elif task == "quadruplet":
-        prompt = f"""Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: "{input_review}"
-Trả lời:"""
-    
+    prompt = get_prompt(input_review, prompt_format, task)
     prompt = prompt.replace("..", ".")
     prompt = prompt if add_instruction else input_review
     input_ids = tokenizer(prompt, max_length=max_input_length, return_tensors="pt", padding="max_length", truncation=True).input_ids.cuda()
