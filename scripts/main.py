@@ -182,9 +182,6 @@ def preprocess_function_for_causal_lm(examples):
     model_inputs = tokenizer(inputs)
     labels = tokenizer(targets, add_special_tokens=False)  # don't add bos token because we concatenate with inputs
     for i in range(batch_size):
-        if model_inputs["input_ids"][i][-1] == tokenizer.eos_token_id:
-            model_inputs["input_ids"][i] = model_inputs["input_ids"][i][:-1]
-            model_inputs["attention_mask"][i] = model_inputs["attention_mask"][i][:-1]
         sample_input_ids = model_inputs["input_ids"][i]
         label_input_ids = labels["input_ids"][i] + [tokenizer.eos_token_id]
         # print(i, sample_input_ids, label_input_ids)
@@ -318,7 +315,7 @@ print("Inference time (seconds): ", inference_time)
 
 df = pd.DataFrame(list(zip(input_test, output_test, y_pred)),
                columns =['text','y_true', 'y_pred'])
-df.to_csv(model_id.replace("/", "_") + ".csv",index=False)
+df.to_csv(model_id.replace("/", "-") + domain +  ".csv",index=False)
 df.head()
 
 results = eval_absa(df.y_pred.tolist(), df.y_true.tolist())
