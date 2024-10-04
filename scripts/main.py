@@ -289,13 +289,13 @@ def get_prediction(example):
     prompt = get_prompt(input_review, prompt_format, task)
     prompt = prompt.replace("..", ".")
     prompt = prompt if add_instruction else input_review
-    input_ids = tokenizer(prompt, max_length=max_input_length, return_tensors="pt", padding="max_length", truncation=True).input_ids.cuda()
+    input_ids = tokenizer(prompt, return_tensors="pt").input_ids.cuda()
     outputs = model.generate(input_ids=input_ids, max_new_tokens=max_output_length, eos_token_id=tokenizer.eos_token_id)
     preds = outputs[:, max_input_length:].detach().cpu().numpy()[0]
     label = tokenizer.decode(preds, skip_special_tokens=True)
     return label
 
-input_test, output_test = create_instruction_input_output(df_test, task=task)
+input_test, output_test = create_instruction_input_output(df_test)
 
 import time
 start_time= time.time() # set the time at which inference started
