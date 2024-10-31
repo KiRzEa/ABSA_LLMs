@@ -52,7 +52,7 @@ add_instruction = args.add_instruction
 using_trainer = args.using_trainer
 gradient_accumulation_steps = args.gradient_accumulation_steps
 if not gradient_accumulation_steps:
-    gradient_accumulation_steps = 64 // batch_size
+    gradient_accumulation_steps = 32 // batch_size
 prompt_format = args.prompt_format
 #======================================
 print("="*50)
