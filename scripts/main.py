@@ -291,7 +291,10 @@ def get_prediction(example):
     prompt = prompt if add_instruction else input_review
     input_ids = tokenizer(prompt, max_length=max_input_length, return_tensors="pt", padding="max_length", truncation=True).input_ids.cuda()
     outputs = model.generate(input_ids=input_ids, max_new_tokens=max_output_length, eos_token_id=tokenizer.eos_token_id)
-    preds = outputs[:, max_input_length:].detach().cpu().numpy()[0]
+    if model_type == 'seq2seq':
+        preds = outputs.detach().cpu().numpy()[0]
+    else:
+        preds = outputs[:, max_input_length:].detach().cpu().numpy()[0]
     label = tokenizer.decode(preds, skip_special_tokens=True)
     return label
 
