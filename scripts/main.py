@@ -148,8 +148,7 @@ peft_config = LoraConfig(
         target_modules=target_modules,
 )
 
-if model_type != 'seq2seq':
-    model = get_peft_model(model, peft_config)
+model = get_peft_model(model, peft_config)
 
 print_trainable_parameters(model)
 
