@@ -322,12 +322,14 @@ df.to_csv(model_id.replace("/", "-") + domain +  ".csv",index=False)
 df.head()
 
 results = eval_absa(df.y_pred.tolist(), df.y_true.tolist())
-scores = "Accuracy: " + str(results['acc']) \
-            + "\nPrecision: " + str(results['precision']) \
-            + "\nRecall: " + str(results['recall']) \
-            + "\nF1-score: " + str(results['f1']) \
-            + "\nTraining time: " + str(time_training) \
-            + "\nInference time: " + str(inference_time)
+scores = (
+    f"Accuracy: {results['acc']:.4f}\n"
+    f"Precision: {results['precision']:.4f}\n"
+    f"Recall: {results['recall']:.4f}\n"
+    f"F1-score: {results['f1']:.4f}\n"
+    f"Training time: {time_training:.4f}\n"
+    f"Inference time: {inference_time:.4f}"
+)
 
 text_score = "Model: " + model_id + "\n" + scores + "\n\n"
 with open('score.txt', 'a') as file:
