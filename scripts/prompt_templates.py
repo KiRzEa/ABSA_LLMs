@@ -1,15 +1,30 @@
-PROMPT_1 = """<|im_start|>system
-Bạn là một trợ lí AI hữu ích. Hãy trả lời người dùng một cách chính xác.
-<|im_end|>
-<|im_start|>user
-{}<|im_end|>
-<|im_start|>assistant"""
-
 PROMPT_2 = """[INST] <<SYS>>
 Bạn là một trợ lí AI hữu ích. Hãy trả lời người dùng một cách chính xác.
 <</SYS>>
 
 {} [/INST]"""
+
+PROMPT_SEALLM_V2 = """\
+<s><|im_start|>system
+You are a helpful assistant.</s><|im_start|>user
+{}</s><|im_start|>assistant
+"""
+
+PROMPT_SEALLM_V2_5 = """\
+<bos><|im_start|>system
+Bạn là một trợ lí AI hữu ích. Hãy trả lời người dùng một cách chính xác.<eos>
+<|im_start|>user
+{}<eos>
+<|im_start|>assistant
+"""
+
+PROMPT_SEALLM_V3 = """\
+<|im_start|>system
+Bạn là một trợ lí AI hữu ích. Hãy trả lời người dùng một cách chính xác.<|im_end|>
+<|im_start|>user
+{}<|im_end|>
+<|im_start|>assistant
+"""
 
 
 pair_instruction = """Hãy xác định loại khía cạnh và trạng thái ý kiến (tốt, tạm, tệ) cho bình luận sau đây: \"{}\"\nTrả lời:"""
@@ -19,25 +34,25 @@ triplet_instruction = """Hãy xác định loại khía cạnh, cụm từ thể
 quadruplet_instruction = """Hãy xác định loại khía cạnh, cụm từ thể hiện khía cạnh, cụm từ thể hiện ý kiến và trạng thái ý kiến (tốt tạm, tệ) cho bình luận sau đây: \"{}\"\nTrả lời:"""
 
 def get_prompt(input_review, prompt_format, task):
+
+    if prompt_format == 'SEALLM_V2':
+        prompt = PROMPT_SEALLM_V2
+    elif prompt_format == 'SEALLM_V2_5':
+        prompt = PROMPT_SEALLM_V2_5
+    elif prompt_format == 'SEALLM_V3':
+        prompt = PROMPT_SEALLM_V3
+    else:
+        prompt = None
+
     if task == 'pair':
-        if prompt_format == '1':
-            prompt = PROMPT_1.format(pair_instruction.format(input_review))
-        elif prompt_format == '2':
-            prompt = PROMPT_2.format(pair_instruction.format(input_review))
-        else:
-            prompt = pair_instruction.format(input_review)
+        instruction = pair_instruction.format(input_review)
     elif task == 'triplet':
-        if prompt_format == '1':
-            prompt = PROMPT_1.format(triplet_instruction.format(input_review))
-        elif prompt_format == '2':
-            prompt = PROMPT_2.format(triplet_instruction.format(input_review))
-        else:
-            prompt = triplet_instruction.format(input_review)
+        instruction = triplet_instruction.format(input_review)
     elif task == 'quadruplet':
-        if prompt_format == '1':
-            prompt = PROMPT_1.format(quadruplet_instruction.format(input_review))
-        elif prompt_format == '2':
-            prompt = PROMPT_2.format(quadruplet_instruction.format(input_review))
-        else:
-            prompt = quadruplet_instruction.format(input_review)
+        instruction = quadruplet_instruction.format(input_review)
+    
+    if not prompt:
+        prompt = prompt.format(instruction.format(input_review))
+    else:
+        prompt = instruction.format(input_review)
     return prompt
