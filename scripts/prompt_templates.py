@@ -51,7 +51,7 @@ def get_prompt(input_review, prompt_format, task):
     elif task == 'quadruplet':
         instruction = quadruplet_instruction.format(input_review)
     
-    if not prompt:
+    if prompt:
         prompt = prompt.format(instruction.format(input_review))
     else:
         prompt = instruction.format(input_review)
