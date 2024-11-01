@@ -32,6 +32,7 @@ parser.add_argument("--model_type", choices=['seq2seq', 'causal'], default='seq2
 parser.add_argument("--add_instruction", action='store_true')
 parser.add_argument("--using_trainer", action='store_true')
 parser.add_argument("--gradient_accumulation_steps", type=int, default=None)
+parser.add_argument("--peft", action='store_true')
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
@@ -148,7 +149,7 @@ peft_config = LoraConfig(
         target_modules=target_modules,
 )
 
-model = get_peft_model(model, peft_config)
+model = get_peft_model(model, peft_config) if args.peft else model
 
 print_trainable_parameters(model)
 
