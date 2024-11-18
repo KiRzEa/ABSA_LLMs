@@ -21,7 +21,7 @@ from prompt_templates import *
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--model_id", type=str, default="ura-hcmut/ura-llama-7b")
-parser.add_argument("--domain", choices=["Restaurant", "Phone"], default="Restaurant")
+parser.add_argument("--domain", choices=["Restaurant", "Phone", "Education", "Hotel", "Mother", "Technology"], default="Restaurant")
 parser.add_argument("--task", choices=["pair", "triplet", "quadruplet"])
 parser.add_argument("--lr", type=float, default=2e-4)
 parser.add_argument("--num_epochs", type=int, default=10)
