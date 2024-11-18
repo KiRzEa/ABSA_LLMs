@@ -69,6 +69,8 @@ print("[INFO] Using Instruction:", add_instruction)
 print("[INFO] Using Trainer:", using_trainer)
 print("[INFO] Gradient Accumulation Steps:", gradient_accumulation_steps)
 print("[INFO] Prompt Format:", prompt_format)
+print("[INFO] Add instruction:", add_instruction)
+print("[INFO] Domain:", domain)
 print("="*50)
 #======================================
 
@@ -323,6 +325,8 @@ df.head()
 
 results = eval_absa(df.y_pred.tolist(), df.y_true.tolist())
 scores = (
+    f"Domain: {domain}\n"
+    f"Add instruction: {add_instruction}\n"
     f"Accuracy: {results['acc']:.4f}\n"
     f"Precision: {results['precision']:.4f}\n"
     f"Recall: {results['recall']:.4f}\n"
