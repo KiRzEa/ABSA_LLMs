@@ -26,7 +26,9 @@ def init_trainer(model, tokenizer, tokenized_dataset, learning_rate, batch_size,
         logging_strategy="steps",
         logging_steps=500,
         save_strategy="no",
-        gradient_accumulation_steps=gradient_accumulation_steps
+        gradient_accumulation_steps=gradient_accumulation_steps,
+        push_to_hub=True,
+        hub_model_id=f"kietnt0603/{os.getenv('domain')}"
     )
 
     # Create Trainer instance
