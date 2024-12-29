@@ -28,6 +28,7 @@ def init_trainer(model, tokenizer, tokenized_dataset, learning_rate, batch_size,
         save_strategy="epoch",
         gradient_accumulation_steps=gradient_accumulation_steps,
         push_to_hub=True,
+        save_total_limit=1,
         hub_model_id=f"kietnt0603/{os.getenv('domain')}"
     )
 
